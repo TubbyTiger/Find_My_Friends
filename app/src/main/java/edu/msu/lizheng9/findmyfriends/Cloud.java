@@ -105,7 +105,7 @@ public class Cloud {
             }
 
             stream = conn.getInputStream();
-            //  logStream(stream);
+            ///  logStream(stream);
         } catch (MalformedURLException e) {
             // Should never happen
             return false;
