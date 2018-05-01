@@ -3,6 +3,8 @@ package edu.msu.lizheng9.findmyfriends;
 import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -10,6 +12,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.security.AccessController.getContext;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -32,6 +42,79 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             username = (String)b.get("username");
             device= (String)b.get("device");
         }
+        final View view = this.findViewById(android.R.id.content);
+
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Cloud cloud = new Cloud();
+                final boolean success = cloud.getUsers();
+                view.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!success){
+                            Toast.makeText(MapsActivity.this,
+                                    R.string.get_users_fail,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+        t.start();
+        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+    }
+
+    public void loadJSON(JSONArray[] dataJSON){
+        List<Integer> idsList = new ArrayList<>();
+        //location
+
+        //id
+        for(int i =0; i < dataJSON[1].length() ;++i){
+            try {
+                idsList.add(Integer.parseInt(dataJSON[1].get(i).toString()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //remove the captured pieces
+        for(int x=pieces.size()-1; x>-1; x--){
+            if(!idsList.contains(pieces.get(x).getId())){
+                pieces.remove(x);
+            }
+        }
+        for(int i=0; i<dataJSON[1].length()-1; i++) {
+            for(int j=i+1;  j<dataJSON[1].length();  j++) {
+                try {
+                    if(Integer.parseInt(dataJSON[1].get(i).toString()) == pieces.get(j).getId()) {
+                        CheckerPiece t = pieces.get(i);
+                        pieces.set(i, pieces.get(j));
+                        pieces.set(j, t);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        for(int i=0;  i<pieces.size(); i++) {
+
+
+            CheckerPiece piece = pieces.get(i);
+            try {
+                piece.moveTo(Float.parseFloat(dataJSON[0].get(i*2).toString()),Float.parseFloat(dataJSON[0].get(i*2+1).toString()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            try {
+                piece.setQueen(Boolean.parseBoolean(dataJSON[2].get(i).toString()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        //queens
+        view.invalidate();
+
     }
 
 
