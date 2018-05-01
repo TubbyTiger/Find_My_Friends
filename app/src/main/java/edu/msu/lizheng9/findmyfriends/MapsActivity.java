@@ -168,7 +168,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     for (int i = 0; i < obj.length(); i++) {
                         JSONObject jsonObject = obj.getJSONObject(i);
                         String id = jsonObject.getString("androidid");
-                        if (id == Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)){
+                        if (id.equals(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID) )){
                             continue;
                         }
                         String name = jsonObject.getString("username");
