@@ -1,8 +1,16 @@
 package edu.msu.lizheng9.findmyfriends;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.*;
+import android.location.Location;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -32,6 +40,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location location_;
     private String xmlJson;
 
+    private LocationManager locationManager = null;
+
+    private double latitude = 0;
+    private double longitude = 0;
+    private boolean valid = false;
+
+    private double toLatitude = 0;
+    private double toLongitude = 0;
+    private String to = "";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +61,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
+
+        // Get the location manager
+        locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+        }
 
         if (b!= null){
             username = (String)b.get("username");
@@ -71,57 +101,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
     }
 
-//    public void loadJSON(JSONArray[] dataJSON){
-//        List<Integer> idsList = new ArrayList<>();
-//        //location
-//
-//        //id
-//        for(int i =0; i < dataJSON[1].length() ;++i){
-//            try {
-//                idsList.add(Integer.parseInt(dataJSON[1].get(i).toString()));
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        //remove the captured pieces
-//        for(int x=pieces.size()-1; x>-1; x--){
-//            if(!idsList.contains(pieces.get(x).getId())){
-//                pieces.remove(x);
-//            }
-//        }
-//        for(int i=0; i<dataJSON[1].length()-1; i++) {
-//            for(int j=i+1;  j<dataJSON[1].length();  j++) {
-//                try {
-//                    if(Integer.parseInt(dataJSON[1].get(i).toString()) == pieces.get(j).getId()) {
-//                        CheckerPiece t = pieces.get(i);
-//                        pieces.set(i, pieces.get(j));
-//                        pieces.set(j, t);
-//                    }
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//        for(int i=0;  i<pieces.size(); i++) {
-//
-//
-//            CheckerPiece piece = pieces.get(i);
-//            try {
-//                piece.moveTo(Float.parseFloat(dataJSON[0].get(i*2).toString()),Float.parseFloat(dataJSON[0].get(i*2+1).toString()));
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            try {
-//                piece.setQueen(Boolean.parseBoolean(dataJSON[2].get(i).toString()));
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        //queens
-//        view.invalidate();
-//
-//    }
+
 
 
     /**
@@ -138,9 +118,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng currentLocation = new LatLng(latitude, longitude);
+        mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation,14.0f));
         //parseJSONWithJSONObject(JSON);
         String $js = "[{\"androidid\":\"12314565455412\",\"0\":\"12314565455412\",\"username\":\"randomPos1\",\"1\":\"randomPos1\",\"longitude\":\"16.23638\",\"2\":\"16.23638\",\"latitude\":\"-16.26818\",\"3\":\"-16.26818\"},{\"androidid\":\"1681531822121\",\"0\":\"1681531822121\",\"username\":\"randomPos2\",\"1\":\"randomPos2\",\"longitude\":\"-95.91185\",\"2\":\"-95.91185\",\"latitude\":\"-2.74545\",\"3\":\"-2.74545\"},{\"androidid\":\"437fcb34a5ba7ea0\",\"0\":\"437fcb34a5ba7ea0\",\"username\":\"jdjd\",\"1\":\"jdjd\",\"longitude\":\"\",\"2\":\"\",\"latitude\":\"\",\"3\":\"\"},{\"androidid\":\"bc6107c67e5a4d7c\",\"0\":\"bc6107c67e5a4d7c\",\"username\":\"jackie\",\"1\":\"jackie\",\"longitude\":\"\",\"2\":\"\",\"latitude\":\"\",\"3\":\"\"}]";
         try {
@@ -171,6 +151,93 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
+        registerListeners();
+
 
     }
+    /**
+     * Called when this application is no longer the foreground application.
+     */
+    @Override
+    protected void onPause() {
+        unregisterListeners();
+        super.onPause();
+    }
+    public void registerListeners() {
+        unregisterListeners();
+        // Create a Criteria object
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+        criteria.setAltitudeRequired(true);
+        criteria.setBearingRequired(false);
+        criteria.setSpeedRequired(false);
+        criteria.setCostAllowed(false);
+
+        String bestAvailable = locationManager.getBestProvider(criteria, true);
+        if (bestAvailable != null) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+
+            locationManager.requestLocationUpdates(bestAvailable, 500, 1, activeListener);
+            Location location = locationManager.getLastKnownLocation(bestAvailable);
+            onLocation(location);
+        }
+
+    }
+    private void onLocation(Location location) {
+        if(location == null) {
+            return;
+        }
+
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
+        Log.i("location",Double.toString(latitude));
+        Log.i("location",Double.toString(longitude));
+        valid = true;
+        setUI();
+    }
+    public void unregisterListeners() {
+        locationManager.removeUpdates(activeListener);
+
+    }
+
+    /**
+     * Set all user interface components to the current state
+     */
+    private void setUI() {
+
+    }
+    private ActiveListener activeListener = new ActiveListener();
+
+    private class ActiveListener implements LocationListener {
+        @Override
+        public void onLocationChanged(Location location) {
+
+        }
+
+        @Override
+        public void onStatusChanged(String s, int i, Bundle bundle) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String s) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String s) {
+
+        }
+    };
 }

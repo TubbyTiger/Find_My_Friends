@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
        final EditText editUsername = findViewById(R.id.editUsername);
        final String username = editUsername.getText().toString();
+
        Thread t = new Thread(new Runnable() {
            @Override
            public void run() {
