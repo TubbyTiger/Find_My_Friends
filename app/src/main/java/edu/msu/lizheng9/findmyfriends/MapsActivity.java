@@ -32,6 +32,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.os.Handler;
+import java.util.logging.LogRecord;
 
 import static java.security.AccessController.getContext;
 
@@ -64,7 +66,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
-
 
         // Get the location manager
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -158,6 +159,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         registerListeners();
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -194,6 +196,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
         t.start();
         try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+        final Handler handler = new Handler();
+        final Runnable r = new Runnable() {
+            public void run() {
+                Log.i("HANDLER TEST","EE");
+                Thread ta = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Cloud cloud = new Cloud();
+                        final boolean success = cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
+                        view.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (!success){
+                                    Toast.makeText(MapsActivity.this,
+                                            R.string.send_location_fail,
+                                            Toast.LENGTH_SHORT).show();
+
+                                }
+                            }
+                        });
+                        xmlJson = cloud.xmlJsonArray;
+                    }
+                });
+                ta.start();
+                try { ta.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+                handler.postDelayed(this, 5000);
+            }
+        };
+
+        r.run();
+
     }
 
     /**
