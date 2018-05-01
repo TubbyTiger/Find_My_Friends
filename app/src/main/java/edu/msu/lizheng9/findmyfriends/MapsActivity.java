@@ -154,7 +154,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 }
                             }
                         });
-                        xmlJson = cloud.xmlJsonArray;
                     }
                 });
                 ta.start();
@@ -180,7 +179,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             double lat = Double.parseDouble(latitude);
                             LatLng cord = new LatLng(lat, lon);
                             mMap.addMarker(new MarkerOptions().position(cord).title(name));
-
                         }
                     }
 
@@ -208,7 +206,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                marker.showInfoWindow();
                 LatLng currentLocation = new LatLng(latitude, longitude);
                 PolylineOptions line = new PolylineOptions();
-
                 line.add(currentLocation,marker.getPosition());
                 mMap.addPolyline(line);
                 return true;
