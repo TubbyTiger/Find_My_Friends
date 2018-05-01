@@ -145,7 +145,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if(xmlJson != null){
             $js = xmlJson;
         }
-
         try {
 
 
