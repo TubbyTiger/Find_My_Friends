@@ -55,6 +55,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private double toLatitude = 0;
     private double toLongitude = 0;
     private String to = "";
+    private Marker currentMarker = null;
+    private String selected = null;
 
 
     @Override
@@ -89,7 +91,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-
+    private LatLng currentLocation;
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -106,7 +108,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         uiSettings.setZoomGesturesEnabled(true);
         uiSettings.setZoomControlsEnabled(true);
         // Add a marker in Sydney and move the camera
-        final LatLng currentLocation = new LatLng(latitude, longitude);
+        currentLocation = new LatLng(latitude, longitude);
         mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation,14.0f));
         final Handler handler = new Handler();
@@ -178,7 +180,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             double lon = Double.parseDouble(longitude);
                             double lat = Double.parseDouble(latitude);
                             LatLng cord = new LatLng(lat, lon);
-                            mMap.addMarker(new MarkerOptions().position(cord).title(name));
+                            Marker m = mMap.addMarker(new MarkerOptions().position(cord).title(name));
+                            if(selected!=null && selected.equals(name)){
+                                drawDist(m);
+                                m.showInfoWindow();
+                            }
                         }
                     }
 
@@ -188,6 +194,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 registerListeners();
                 final LatLng currentLocation = new LatLng(latitude, longitude);
                 mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
+                if(currentMarker != null){
+                    currentMarker.showInfoWindow();
+                    drawDist(currentMarker);
+                }
+
                 Log.i("CURRENTTT", Double.toString(longitude));
                 Log.i("CURRENTTT",Double.toString(latitude));
                 handler.postDelayed(this, 5000);
@@ -200,14 +211,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                float[] results = new float[1];
-                Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
-                marker.setSnippet("Distance:" + String.valueOf(results[0])+"m");
-               marker.showInfoWindow();
-                LatLng currentLocation = new LatLng(latitude, longitude);
-                PolylineOptions line = new PolylineOptions();
-                line.add(currentLocation,marker.getPosition());
-                mMap.addPolyline(line);
+                selected = marker.getTitle();
+                drawDist(marker);
                 return true;
             }
         });
@@ -215,6 +220,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
+    }
+
+    private void drawDist(Marker marker){
+        float[] results = new float[1];
+        Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
+        marker.setSnippet("Distance:" + String.valueOf(results[0])+"m");
+        marker.showInfoWindow();
+        LatLng currentLocation = new LatLng(latitude, longitude);
+        PolylineOptions line = new PolylineOptions();
+        line.add(currentLocation,marker.getPosition());
+        mMap.addPolyline(line);
     }
 
     /**
