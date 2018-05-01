@@ -79,28 +79,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             username = (String)b.get("username");
             device= (String)b.get("device");
         }
-        final View view = this.findViewById(android.R.id.content);
 
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Cloud cloud = new Cloud();
-                final boolean success = cloud.getUsers();
-                view.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!success){
-                            Toast.makeText(MapsActivity.this,
-                                    R.string.get_users_fail,
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                xmlJson = cloud.xmlJsonArray;
-            }
-        });
-        t.start();
-        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+
     }
 
 
@@ -126,8 +106,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation,14.0f));
         //parseJSONWithJSONObject(JSON);
-        String $js = "[{\"androidid\":\"12314565455412\",\"0\":\"12314565455412\",\"username\":\"randomPos1\",\"1\":\"randomPos1\",\"longitude\":\"16.23638\",\"2\":\"16.23638\",\"latitude\":\"-16.26818\",\"3\":\"-16.26818\"},{\"androidid\":\"1681531822121\",\"0\":\"1681531822121\",\"username\":\"randomPos2\",\"1\":\"randomPos2\",\"longitude\":\"-95.91185\",\"2\":\"-95.91185\",\"latitude\":\"-2.74545\",\"3\":\"-2.74545\"},{\"androidid\":\"437fcb34a5ba7ea0\",\"0\":\"437fcb34a5ba7ea0\",\"username\":\"jdjd\",\"1\":\"jdjd\",\"longitude\":\"\",\"2\":\"\",\"latitude\":\"\",\"3\":\"\"},{\"androidid\":\"bc6107c67e5a4d7c\",\"0\":\"bc6107c67e5a4d7c\",\"username\":\"jackie\",\"1\":\"jackie\",\"longitude\":\"\",\"2\":\"\",\"latitude\":\"\",\"3\":\"\"}]";
+        final View view = this.findViewById(android.R.id.content);
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Cloud cloud = new Cloud();
+                final boolean success = cloud.getUsers();
+
+                view.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!success){
+                            Toast.makeText(MapsActivity.this,
+                                    R.string.get_users_fail,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                xmlJson = cloud.xmlJsonArray;
+            }
+        });
+        t.start();
+        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+        Log.i("AAA",xmlJson);
+        String $js = "";
+        if(xmlJson != null){
+            $js = xmlJson;
+        }
+
         try {
+
             JSONArray obj = new JSONArray($js);
             for (int i = 0; i < obj.length(); i++) {
                 JSONObject jsonObject = obj.getJSONObject(i);
@@ -143,11 +151,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 }
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        registerListeners();
 
+        t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Cloud cloud = new Cloud();
+                final boolean success = cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
+                view.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!success){
+                            Toast.makeText(MapsActivity.this,
+                                    R.string.send_location_fail,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                xmlJson = cloud.xmlJsonArray;
+            }
+        });
+        t.start();
+        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
     }
 
     /**

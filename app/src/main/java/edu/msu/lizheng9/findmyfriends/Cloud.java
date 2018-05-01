@@ -20,7 +20,10 @@ import java.net.URL;
 
 public class Cloud {
     private static String SET_USER_URL = "http://webdev.cse.msu.edu/~lizheng9/cse476/project3/login.php";
+    private static String UPDATE_URL = "http://webdev.cse.msu.edu/~lizheng9/cse476/project3/update.php";
+
     public String xmlJsonArray = "";
+
     public static void logStream(InputStream stream) {
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(stream));
@@ -37,8 +40,8 @@ public class Cloud {
     }
 
 
-    public boolean User(String username, String deviceId){
-        if((username.length() ==0 )){
+    public boolean User(String username, String deviceId) {
+        if ((username.length() == 0)) {
             return false;
         }
         String query, url_ = "";
@@ -50,12 +53,12 @@ public class Cloud {
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             int responseCode = conn.getResponseCode();
-            if(responseCode != HttpURLConnection.HTTP_OK) {
+            if (responseCode != HttpURLConnection.HTTP_OK) {
                 return false;
             }
 
             stream = conn.getInputStream();
-          //  logStream(stream);
+            //  logStream(stream);
         } catch (MalformedURLException e) {
             // Should never happen
             return false;
@@ -71,15 +74,15 @@ public class Cloud {
             xml.require(XmlPullParser.START_TAG, null, "fmf");
 
             String status = xml.getAttributeValue(null, "status");
-            if(status.equals("no")) {
+            if (status.equals("no")) {
                 return false;
             }
             // We are done
-        } catch(XmlPullParserException ex) {
+        } catch (XmlPullParserException ex) {
             return false;
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             return false;
-        }finally {
+        } finally {
             try {
                 stream.close();
             } catch (IOException e) {
@@ -89,7 +92,7 @@ public class Cloud {
         return true;
     }
 
-    public boolean getUsers(){
+    public boolean getUsers() {
 
         String query, url_ = "";
         query = "http://webdev.cse.msu.edu/~lizheng9/cse476/project3/locations.php";
@@ -100,12 +103,51 @@ public class Cloud {
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             int responseCode = conn.getResponseCode();
-            if(responseCode != HttpURLConnection.HTTP_OK) {
+            if (responseCode != HttpURLConnection.HTTP_OK) {
                 return false;
             }
 
             stream = conn.getInputStream();
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(stream));
+
+            Log.e("476", "logStream: If you leave this in, code after will not work!");
+            try {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    xmlJsonArray+= line;
+                }
+            } catch (IOException ex) {
+                return false;
+            }
+
             ///  logStream(stream);
+        } catch (MalformedURLException e) {
+            // Should never happen
+            return false;
+        } catch (IOException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean sendLocation(String device,String lon, String lat) {
+
+        String query, url_ = "";
+        query = UPDATE_URL + "?device=" + device + "&lon=" + lon +"&lat=" + lat;
+
+        InputStream stream = null;
+        try {
+            URL url = new URL(query);
+
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            int responseCode = conn.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                return false;
+            }
+
+            stream = conn.getInputStream();
+            //  logStream(stream);
         } catch (MalformedURLException e) {
             // Should never happen
             return false;
@@ -121,16 +163,15 @@ public class Cloud {
             xml.require(XmlPullParser.START_TAG, null, "fmf");
 
             String status = xml.getAttributeValue(null, "status");
-            if(status.equals("no")) {
+            if (status.equals("no")) {
                 return false;
             }
-            xmlJsonArray = xml.getAttributeValue(null,"xmlJsonArray");
             // We are done
-        } catch(XmlPullParserException ex) {
+        } catch (XmlPullParserException ex) {
             return false;
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             return false;
-        }finally {
+        } finally {
             try {
                 stream.close();
             } catch (IOException e) {
@@ -139,4 +180,7 @@ public class Cloud {
         }
         return true;
     }
+
+
+
 }
