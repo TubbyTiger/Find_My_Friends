@@ -24,6 +24,7 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 
@@ -206,7 +207,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
         r.run();
 
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener()
+        {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                selected = null;
+                if(mLine != null){
+                    mLine.remove();
+                }
+            }
 
+        });
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -218,10 +229,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
+//        mMap.setOnInfoWindowCloseListener(new GoogleMap.OnInfoWindowCloseListener() {
+//            @Override
+//            public void onInfoWindowClose(Marker marker) {
+//                selected = null;
+//                if(mLine != null){
+//                    mLine.remove();
+//                }
+//            }
+//        });
 
 
     }
 
+    private Polyline mLine = null;
     private void drawDist(Marker marker){
         float[] results = new float[1];
         Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
@@ -230,7 +251,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng currentLocation = new LatLng(latitude, longitude);
         PolylineOptions line = new PolylineOptions();
         line.add(currentLocation,marker.getPosition());
-        mMap.addPolyline(line);
+        mLine = mMap.addPolyline(line);
     }
 
     /**
