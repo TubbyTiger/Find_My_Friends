@@ -19,7 +19,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
@@ -30,6 +29,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.os.Handler;
+import java.util.logging.LogRecord;
 
 import static java.security.AccessController.getContext;
 
@@ -62,7 +63,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
-
 
         // Get the location manager
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -98,9 +98,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        UiSettings uiSettings = mMap.getUiSettings();
-        uiSettings.setZoomGesturesEnabled(true);
-        uiSettings.setZoomControlsEnabled(true);
+
         // Add a marker in Sydney and move the camera
         LatLng currentLocation = new LatLng(latitude, longitude);
         mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
@@ -154,28 +152,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        registerListeners();
 
-        t = new Thread(new Runnable() {
-            @Override
+        registerListeners();
+        final Handler handler = new Handler();
+        final Runnable r = new Runnable() {
             public void run() {
-                Cloud cloud = new Cloud();
-                final boolean success = cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
-                view.post(new Runnable() {
+                Log.i("HANDLER TEST","EE");
+                Thread ta = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        if (!success){
-                            Toast.makeText(MapsActivity.this,
-                                    R.string.send_location_fail,
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                        Cloud cloud = new Cloud();
+                        final boolean success = cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
+                        view.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (!success){
+                                    Toast.makeText(MapsActivity.this,
+                                            R.string.send_location_fail,
+                                            Toast.LENGTH_SHORT).show();
+
+                                }
+                            }
+                        });
+                        xmlJson = cloud.xmlJsonArray;
                     }
                 });
-                xmlJson = cloud.xmlJsonArray;
+                ta.start();
+                try { ta.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+                handler.postDelayed(this, 5000);
             }
-        });
-        t.start();
-        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+        };
+
+        r.run();
+
     }
 
     /**
