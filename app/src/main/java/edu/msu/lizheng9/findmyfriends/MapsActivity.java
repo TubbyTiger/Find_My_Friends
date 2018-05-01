@@ -162,7 +162,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void run() {
                         if (!success){
                             Toast.makeText(MapsActivity.this,
-                                    R.string.get_users_fail,
+                                    R.string.send_location_fail,
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
