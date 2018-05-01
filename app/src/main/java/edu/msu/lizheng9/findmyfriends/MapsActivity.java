@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.*;
 import android.location.Location;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -114,12 +115,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final View view = this.findViewById(android.R.id.content);
         final Runnable r = new Runnable() {
             public void run() {
+                mMap.clear();
                 Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
                         Cloud cloud = new Cloud();
                         final boolean success = cloud.getUsers();
-
                         view.post(new Runnable() {
                             @Override
                             public void run() {
@@ -135,60 +136,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 });
                 t.start();
                 try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
-                handler.postDelayed(this, 5000);
-            }
-        };
-        r.run();
-
-        Log.i("AAA",xmlJson);
-        String $js = "";
-        if(xmlJson != null){
-            $js = xmlJson;
-        }
-        try {
 
 
-            JSONArray obj = new JSONArray($js);
-            for (int i = 0; i < obj.length(); i++) {
-                JSONObject jsonObject = obj.getJSONObject(i);
-                String id = jsonObject.getString("androidid");
-                String name = jsonObject.getString("username");
-                String longitude = jsonObject.getString("longitude");
-                String latitude = jsonObject.getString("latitude");
-                if(!longitude.isEmpty() && !latitude.isEmpty()){
-                    double lon = Double.parseDouble(longitude);
-                    double lat = Double.parseDouble(latitude);
-                    LatLng cord = new LatLng(lat, lon);
-                    mMap.addMarker(new MarkerOptions().position(cord).title(name));
-
-                }
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        registerListeners();
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                float[] results = new float[1];
-                Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
-                marker.setSnippet("Distance:" + String.valueOf(results[0])+"m");
-               marker.showInfoWindow();
-                LatLng currentLocation = new LatLng(latitude, longitude);
-                PolylineOptions line = new PolylineOptions();
-
-                line.add(currentLocation,marker.getPosition());
-                mMap.addPolyline(line);
-                return true;
-            }
-        });
-
-
-        final Runnable ra = new Runnable() {
-            public void run() {
-                Log.i("HANDLER TEST","EE");
                 Thread ta = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -210,11 +159,63 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 });
                 ta.start();
                 try { ta.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+                String $js = "";
+                if(xmlJson != null){
+                    $js = xmlJson;
+                }
+                try {
+
+                    JSONArray obj = new JSONArray($js);
+                    for (int i = 0; i < obj.length(); i++) {
+                        JSONObject jsonObject = obj.getJSONObject(i);
+                        String id = jsonObject.getString("androidid");
+                        if (id == Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)){
+                            continue;
+                        }
+                        String name = jsonObject.getString("username");
+                        String longitude = jsonObject.getString("longitude");
+                        String latitude = jsonObject.getString("latitude");
+                        if(!longitude.isEmpty() && !latitude.isEmpty()){
+                            double lon = Double.parseDouble(longitude);
+                            double lat = Double.parseDouble(latitude);
+                            LatLng cord = new LatLng(lat, lon);
+                            mMap.addMarker(new MarkerOptions().position(cord).title(name));
+
+                        }
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                registerListeners();
+                mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
+                Log.i("CURRENTTT", Double.toString(longitude));
+                Log.i("CURRENTTT",Double.toString(latitude));
                 handler.postDelayed(this, 5000);
             }
         };
+        r.run();
 
-        ra.run();
+
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                float[] results = new float[1];
+                Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
+                marker.setSnippet("Distance:" + String.valueOf(results[0])+"m");
+               marker.showInfoWindow();
+                LatLng currentLocation = new LatLng(latitude, longitude);
+                PolylineOptions line = new PolylineOptions();
+
+                line.add(currentLocation,marker.getPosition());
+                mMap.addPolyline(line);
+                return true;
+            }
+        });
+
+
+
 
     }
 
