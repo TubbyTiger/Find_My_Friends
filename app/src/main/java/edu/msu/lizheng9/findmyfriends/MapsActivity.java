@@ -188,6 +188,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     e.printStackTrace();
                 }
                 registerListeners();
+                final LatLng currentLocation = new LatLng(latitude, longitude);
                 mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
                 Log.i("CURRENTTT", Double.toString(longitude));
                 Log.i("CURRENTTT",Double.toString(latitude));
