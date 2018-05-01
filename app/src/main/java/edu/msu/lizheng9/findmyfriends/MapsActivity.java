@@ -21,7 +21,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -33,7 +35,7 @@ import java.util.List;
 
 import static java.security.AccessController.getContext;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
     private GoogleMap mMap;
     private String username;
@@ -102,7 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         uiSettings.setZoomGesturesEnabled(true);
         uiSettings.setZoomControlsEnabled(true);
         // Add a marker in Sydney and move the camera
-        LatLng currentLocation = new LatLng(latitude, longitude);
+        final LatLng currentLocation = new LatLng(latitude, longitude);
         mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation,14.0f));
         //parseJSONWithJSONObject(JSON);
@@ -136,6 +138,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
 
+
             JSONArray obj = new JSONArray($js);
             for (int i = 0; i < obj.length(); i++) {
                 JSONObject jsonObject = obj.getJSONObject(i);
@@ -151,11 +154,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 }
             }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
         registerListeners();
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                float[] results = new float[1];
+                Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
+                marker.setSnippet("Distance:" + String.valueOf(results[0])+"m");
+               marker.showInfoWindow();
+                LatLng currentLocation = new LatLng(latitude, longitude);
+                PolylineOptions line = new PolylineOptions();
 
+                line.add(currentLocation,marker.getPosition());
+                mMap.addPolyline(line);
+                return true;
+            }
+        });
         t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -185,7 +203,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onResume() {
         super.onResume();
         registerListeners();
-
 
     }
     /**
@@ -227,6 +244,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
     }
+
+
+
     private void onLocation(Location location) {
         if(location == null) {
             return;
