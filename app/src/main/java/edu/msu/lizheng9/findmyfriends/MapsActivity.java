@@ -108,29 +108,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final LatLng currentLocation = new LatLng(latitude, longitude);
         mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation,14.0f));
+        final Handler handler = new Handler();
+
         //parseJSONWithJSONObject(JSON);
         final View view = this.findViewById(android.R.id.content);
-        Thread t = new Thread(new Runnable() {
-            @Override
+        final Runnable r = new Runnable() {
             public void run() {
-                Cloud cloud = new Cloud();
-                final boolean success = cloud.getUsers();
-
-                view.post(new Runnable() {
+                Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        if (!success){
-                            Toast.makeText(MapsActivity.this,
-                                    R.string.get_users_fail,
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                        Cloud cloud = new Cloud();
+                        final boolean success = cloud.getUsers();
+
+                        view.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (!success){
+                                    Toast.makeText(MapsActivity.this,
+                                            R.string.get_users_fail,
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                        xmlJson = cloud.xmlJsonArray;
                     }
                 });
-                xmlJson = cloud.xmlJsonArray;
+                t.start();
+                try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+                handler.postDelayed(this, 5000);
             }
-        });
-        t.start();
-        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
+        };
+        r.run();
+
         Log.i("AAA",xmlJson);
         String $js = "";
         if(xmlJson != null){
@@ -176,28 +185,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return true;
             }
         });
-        t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Cloud cloud = new Cloud();
-                final boolean success = cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
-                view.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!success){
-                            Toast.makeText(MapsActivity.this,
-                                    R.string.send_location_fail,
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                xmlJson = cloud.xmlJsonArray;
-            }
-        });
-        t.start();
-        try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
-        final Handler handler = new Handler();
-        final Runnable r = new Runnable() {
+
+
+        final Runnable ra = new Runnable() {
             public void run() {
                 Log.i("HANDLER TEST","EE");
                 Thread ta = new Thread(new Runnable() {
@@ -225,7 +215,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
 
-        r.run();
+        ra.run();
 
     }
 
