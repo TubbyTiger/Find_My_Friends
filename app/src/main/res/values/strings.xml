@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Find my friends</string>
+    <string name="go">GO</string>
+    <string name="enter_your_name">Enter your name to start:</string>
+</resources>
