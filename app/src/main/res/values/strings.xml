@@ -2,4 +2,7 @@
     <string name="app_name">Find my friends</string>
     <string name="go">GO</string>
     <string name="enter_your_name">Enter your name to start:</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="user_fail">Username Failed</string>
+    <string name="user_success">Username Success</string>
 </resources>

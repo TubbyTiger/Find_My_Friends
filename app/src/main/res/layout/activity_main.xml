@@ -7,7 +7,7 @@
     tools:context="edu.msu.lizheng9.findmyfriends.MainActivity">
 
     <EditText
-        android:id="@+id/editText"
+        android:id="@+id/editUsername"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
@@ -16,11 +16,12 @@
         android:inputType="textPersonName" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/goButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/editText"
+        android:layout_below="@+id/editUsername"
         android:layout_centerHorizontal="true"
+        android:onClick="onGoClicked"
         android:text="@string/go" />
 
     <TextView
@@ -28,6 +29,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/enter_your_name"
-        android:layout_above="@+id/editText"
-        android:layout_alignStart="@+id/editText" />
+        android:layout_above="@+id/editUsername"
+        android:layout_alignStart="@+id/editUsername" />
 </RelativeLayout>
