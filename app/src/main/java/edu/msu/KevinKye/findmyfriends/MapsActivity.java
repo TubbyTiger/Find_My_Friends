@@ -81,13 +81,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     1);
         }
-
         if (b!= null){
             username = (String)b.get("username");
             device= (String)b.get("device");
         }
-
-
     }
 
 
@@ -124,6 +121,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void run() {
                         Cloud cloud = new Cloud();
                         final boolean success = cloud.getUsers();
+                        cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
                         view.post(new Runnable() {
                             @Override
                             public void run() {
@@ -138,29 +136,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 });
                 t.start();
+
                 try { t.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
-
-
-                Thread ta = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Cloud cloud = new Cloud();
-                        final boolean success = cloud.sendLocation(device,Double.toString(longitude),Double.toString(latitude));
-                        view.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (!success){
-                                    Toast.makeText(MapsActivity.this,
-                                            R.string.send_location_fail,
-                                            Toast.LENGTH_SHORT).show();
-
-                                }
-                            }
-                        });
-                    }
-                });
-                ta.start();
-                try { ta.join(3000); } catch (InterruptedException e) { e.printStackTrace(); }
                 String $js = "";
                 if(xmlJson != null){
                     $js = xmlJson;
@@ -195,14 +172,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 registerListeners();
                 final LatLng currentLocation = new LatLng(latitude, longitude);
                 mMap.addMarker(new MarkerOptions().position(currentLocation).title("You"));
-                if(currentMarker != null){
-                    currentMarker.showInfoWindow();
-                    drawDist(currentMarker);
-                }
 
+                if(currentMarker != null){
+                    drawDist(currentMarker);
+                    currentMarker.showInfoWindow();
+                }
                 Log.i("CURRENTTT", Double.toString(longitude));
                 Log.i("CURRENTTT",Double.toString(latitude));
-                handler.postDelayed(this, 5000);
+                handler.postDelayed(this, 1000);
             }
         };
         r.run();
@@ -248,7 +225,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Location.distanceBetween(marker.getPosition().latitude,marker.getPosition().longitude,currentLocation.latitude,currentLocation.longitude,results);
         marker.setSnippet("Distance:" + String.valueOf(results[0])+"m");
         marker.showInfoWindow();
-        LatLng currentLocation = new LatLng(latitude, longitude);
         PolylineOptions line = new PolylineOptions();
         line.add(currentLocation,marker.getPosition());
         mLine = mMap.addPolyline(line);
@@ -312,6 +288,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         latitude = location.getLatitude();
         longitude = location.getLongitude();
+        currentLocation = new LatLng(latitude, longitude);
         Log.i("location",Double.toString(latitude));
         Log.i("location",Double.toString(longitude));
         valid = true;
